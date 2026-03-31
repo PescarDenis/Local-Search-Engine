@@ -1,0 +1,22 @@
+[database]
+path = "~/.search_engine/index.db"
+
+[indexer]
+root = "/home/denispescar"
+ignore = [
+    ".git",
+    "__pycache__",
+    ".venv",
+    "*.pyc",
+    ".idea",
+    ".vscode",
+    "*.pdf",
+    "*.exe",
+    "*.png",
+    "*.jpg",
+    "*.zip"
+]
+
+[search]
+max_results = 20
+snippet_tokens = 10
