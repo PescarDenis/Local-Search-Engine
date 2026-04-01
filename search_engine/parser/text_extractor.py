@@ -1,3 +1,5 @@
+from pydoc import replace
+
 import chardet
 from pathlib import Path
 from .base_extractor import BaseExtractor
@@ -23,7 +25,7 @@ class TextExtractor(BaseExtractor):
             return "", ""
 
         try:
-            with open(path, "r", encoding=encoding) as f:
+            with open(path, "r", encoding=encoding,errors="replace") as f:
                 lines = f.readlines()
 
             content = "".join(lines).strip()
@@ -36,7 +38,7 @@ class TextExtractor(BaseExtractor):
 
     def _guess_encoding(self, path: Path) -> str | None:
         try:
-            raw = path.read_bytes()[:8192]  #Read 8KB to figure out the encoding of the fil
+            raw = path.read_bytes()[:8192]  #Read 8KB to figure out the encoding of the file
         except OSError:
             return None
 
