@@ -35,7 +35,7 @@ class QueryEngine:
                 f.modified_at,
                 f.preview,
                 fts.rank,
-                snippet(files_fts, 1, '[', ']', '...', :tokens) AS snippet
+                snippet(files_fts, 2, '[', ']', '...', :tokens) AS snippet           
             FROM files_fts fts
             JOIN files f ON f.id = fts.rowid
             WHERE files_fts MATCH :query
