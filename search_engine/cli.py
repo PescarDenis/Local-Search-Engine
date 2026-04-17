@@ -69,11 +69,43 @@ def build_parser() -> argparse.ArgumentParser:
         help="Root directory to crawl",
     )
 
-    search_cmd = subparsers.add_parser("search", help="Search the index")
+    search_help = """
+Search the index.
+Examples of specific queries that you may input
+
+Terminal Escaping:
+  If your search uses double quotes (""), wrap the ENTIRE query in single quotes ('') 
+
+->> Basic Searches (No quotes needed)
+    Finds files containing all words anywhere (path, name, or content).
+     -search hello world
+
+->> Specific Column Searches
+    Restrict the search to a specific area using 'path:' or 'content:'.
+     -search content: whatever
+     -search path:src
+
+->> Exact Phrase Searches (Needs single quotes in terminal)
+    Find an exact, multi-word sequence (including spaces). 
+     -search '"hello world"'
+     -search 'content:"void main()"'
+
+->> Advanced Combinations (AND Logic)
+    Mix and match qualifiers. All conditions must be met.
+     -search 'path:src content:"whatever i want"'
+     -search path:tests content:import content:os
+"""
+
+    search_cmd = subparsers.add_parser(
+        "search",
+        help="Search the local index",
+        description=search_help,
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
     search_cmd.add_argument(
         "query",
         nargs="+",
-        help="Search query",
+        help="Search query terms",
     )
 
     return parser
