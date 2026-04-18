@@ -34,12 +34,12 @@ class QueryEngine:
                 f.filename,
                 f.modified_at,
                 f.preview,
-                fts.rank,
+                (fts.rank * f.weight) AS combined_score,
                 snippet(files_fts, 2, '[', ']', '...', :tokens) AS snippet           
             FROM files_fts fts
             JOIN files f ON f.id = fts.rowid
             WHERE files_fts MATCH :query
-            ORDER BY fts.rank
+            ORDER BY combined_score ASC
             LIMIT :limit
         """
         try:

@@ -38,10 +38,10 @@ class IndexManager:
                 """
                 INSERT INTO files
                     (path, filename, extension, size_bytes, mime_type,
-                     created_at, modified_at, preview, content)
+                     created_at, modified_at, preview, content, weight)
                 VALUES
                     (:path, :filename, :extension, :size_bytes, :mime_type,
-                     :created_at, :modified_at, :preview, :content)
+                     :created_at, :modified_at, :preview, :content, :weight)
                 """,
                 entry.__dict__
             )
@@ -58,7 +58,8 @@ class IndexManager:
                     created_at  = :created_at,
                     modified_at = :modified_at,
                     preview     = :preview,
-                    content     = :content
+                    content     = :content,
+                    weight      = :weight
                 WHERE path = :path
                 """,
                entry.__dict__

@@ -12,6 +12,7 @@ class FileEntry:
     mime_type: str
     content: str
     preview: str
+    weight: float = 1.0
 
 
 @dataclass

@@ -12,7 +12,8 @@ CREATE TABLE IF NOT EXISTS files (
     created_at  REAL,
     modified_at REAL,
     preview     TEXT,
-    content     TEXT
+    content     TEXT,
+    weight      REAL DEFAULT 1.0
 );
 
 CREATE VIRTUAL TABLE IF NOT EXISTS files_fts USING fts5(

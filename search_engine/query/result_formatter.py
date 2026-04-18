@@ -12,7 +12,7 @@ class ResultFormatter:
                         filename=row["filename"],
                         preview=preview,
                         modified_at=row["modified_at"],
-                        score=row["rank"],
+                        score=row["combined_score"],
                     )
                 )
             except (IndexError, KeyError, TypeError):

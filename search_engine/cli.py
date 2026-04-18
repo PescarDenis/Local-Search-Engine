@@ -44,6 +44,7 @@ def cmd_search(args: argparse.Namespace, config: dict) -> None:
         modified = datetime.fromtimestamp(result.modified_at).strftime("%Y-%m-%d %H:%M")
         print(f"\n[{i}] {result.filename}")
         print(f"    {result.path}")
+        print(f"    Score    : {result.score:.1f}")
         print(f"    Modified : {modified}")
         if result.preview:
             print(f"    Preview  : {result.preview}")
