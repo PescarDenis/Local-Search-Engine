@@ -2,10 +2,11 @@ import argparse
 import sys
 from datetime import datetime
 from pathlib import Path
-
 from .config import load as load_config
 from .indexer import Indexer
 from .query.query_engine import QueryEngine
+from .query.ranking import RelevanceRanking, AlphabeticalRanking, DateRanking, HistoryRanking
+from .query.history import HistoryTracker
 
 
 def cmd_index(args: argparse.Namespace, config: dict) -> None:
@@ -27,12 +28,20 @@ def cmd_index(args: argparse.Namespace, config: dict) -> None:
 
 def cmd_search(args: argparse.Namespace, config: dict) -> None:
     query = " ".join(args.query)
+    tracker = HistoryTracker(config["database"]["path"])
+    match getattr(args, "sort", "relevance"):
+        case "alphabetical": strategy = AlphabeticalRanking()
+        case "date": strategy = DateRanking()
+        case "history": strategy = HistoryRanking(tracker)
+        case _: strategy = RelevanceRanking()
 
     engine = QueryEngine(
         db_path=config["database"]["path"],
         max_results=config["search"]["max_results"],
         snippet_tokens=config["search"]["snippet_tokens"],
+        strategy=strategy,
     )
+    engine.attach(tracker)
     results = engine.search(query)
 
     if not results:
@@ -48,6 +57,20 @@ def cmd_search(args: argparse.Namespace, config: dict) -> None:
         print(f"    Modified : {modified}")
         if result.preview:
             print(f"    Preview  : {result.preview}")
+
+
+def cmd_suggest(args: argparse.Namespace, config: dict) -> None:
+    tracker = HistoryTracker(config["database"]["path"])
+    prefix = " ".join(args.query)
+    suggestions = tracker.get_suggestions(prefix)
+    
+    if not suggestions:
+        print(f"No suggestions found for '{prefix}'.")
+        return
+        
+    print(f"Suggestions for '{prefix}':")
+    for s in suggestions:
+        print(f"  - {s}")
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -108,6 +131,15 @@ Terminal Escaping:
         nargs="+",
         help="Search query terms",
     )
+    search_cmd.add_argument(
+        "--sort",
+        choices=["relevance", "alphabetical", "date", "history"],
+        default="relevance",
+        help="Ranking strategy to use (relevance, alphabetical, date, history)",
+    )
+
+    suggest_cmd = subparsers.add_parser("suggest", help="Suggest queries based on history")
+    suggest_cmd.add_argument("query", nargs="+", help="Prefix to search for in history")
 
     return parser
 
@@ -122,3 +154,4 @@ def main() -> None:
     match args.command:
         case "index":  cmd_index(args, config)
         case "search": cmd_search(args, config)
+        case "suggest": cmd_suggest(args, config)

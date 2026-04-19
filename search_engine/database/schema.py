@@ -16,6 +16,13 @@ CREATE TABLE IF NOT EXISTS files (
     weight      REAL DEFAULT 1.0
 );
 
+CREATE TABLE IF NOT EXISTS search_history (
+    id INTEGER PRIMARY KEY,
+    query TEXT UNIQUE NOT NULL,
+    search_count INTEGER DEFAULT 1,
+    timestamp REAL
+);
+
 CREATE VIRTUAL TABLE IF NOT EXISTS files_fts USING fts5(
     path,
     filename,

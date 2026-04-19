@@ -2,6 +2,8 @@ from ..database.connection import get_connection
 from ..models import SearchResult
 from .query_parser import QueryParser
 from .result_formatter import ResultFormatter
+from .ranking import RankingStrategy, RelevanceRanking
+from .history import SearchObserver
 
 class QueryEngine:
 
@@ -12,23 +14,38 @@ class QueryEngine:
         snippet_tokens: int,
         parser: QueryParser | None = None,
         formatter: ResultFormatter | None = None,
+        strategy: RankingStrategy | None = None,
     ) -> None:
         self._db_path = db_path
         self._max_results = max_results
         self._snippet_tokens = snippet_tokens
         self._parser = parser or QueryParser()
         self._formatter = formatter or ResultFormatter()
+        self._strategy = strategy or RelevanceRanking()
+        self._observers: list[SearchObserver] = []
+
+    def attach(self, observer: SearchObserver) -> None:
+        # subscribes a generic observer -> HistoryTracker to listen to queries
+        self._observers.append(observer)
 
     def search(self, raw_query: str) -> list[SearchResult]:
+        # notify all subscribed trackers that a search is occurring
+        for observer in self._observers:
+            observer.on_search(raw_query)
+
         fts_query = self._parser.parse(raw_query)
         if fts_query is None:
             return []
 
         rows = self._run_query(fts_query)
-        return self._formatter.format(rows)
+        results = self._formatter.format(rows)
+        
+        # allow the active sorting strategy to manually tweak the results
+        return self._strategy.apply_ranking(results)
 
     def _run_query(self, fts_query: str) -> list:
-        sql = """
+        order_clause = self._strategy.get_order_by()
+        sql = f"""
             SELECT
                 f.path,
                 f.filename,
@@ -39,7 +56,7 @@ class QueryEngine:
             FROM files_fts fts
             JOIN files f ON f.id = fts.rowid
             WHERE files_fts MATCH :query
-            ORDER BY combined_score ASC
+            ORDER BY {order_clause}
             LIMIT :limit
         """
         try:
