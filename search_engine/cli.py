@@ -7,6 +7,7 @@ from .indexer import Indexer
 from .query.query_engine import QueryEngine
 from .query.ranking import RelevanceRanking, AlphabeticalRanking, DateRanking, HistoryRanking
 from .query.history import HistoryTracker
+from .query.cache import SearchCache, CachedQueryEngine
 
 
 def cmd_index(args: argparse.Namespace, config: dict) -> None:
@@ -25,6 +26,10 @@ def cmd_index(args: argparse.Namespace, config: dict) -> None:
     report = indexer.run(root)
     print(report.print_report())
 
+    cache = SearchCache(config["database"]["path"])
+    cache.invalidate() #invalidate when indexing is run
+    print("Search cache cleared.")
+
 
 def cmd_search(args: argparse.Namespace, config: dict) -> None:
     query = " ".join(args.query)
@@ -42,13 +47,19 @@ def cmd_search(args: argparse.Namespace, config: dict) -> None:
         strategy=strategy,
     )
     engine.attach(tracker)
-    results = engine.search(query)
+
+    ttl = config["search"].get("cache_ttl", 300) # get the time to live
+    cache = SearchCache(config["database"]["path"], ttl_seconds=ttl)
+    cached_engine = CachedQueryEngine(engine, cache)
+    results = cached_engine.search(query)
 
     if not results:
         print("No results found.")
         return
 
-    print(f"\n{len(results)} result(s) for '{query}'\n{'─' * 50}")
+    cache_label = " (cached)" if cache.get_last_hit() else "" #print result to show if the data is cached or not
+    print(f"\n{len(results)} result(s) for '{query}'{cache_label}\n{'─' * 50}")
+
     for i, result in enumerate(results, start=1):
         modified = datetime.fromtimestamp(result.modified_at).strftime("%Y-%m-%d %H:%M")
         print(f"\n[{i}] {result.filename}")

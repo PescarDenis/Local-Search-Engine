@@ -1,6 +1,12 @@
 from .connection import get_connection
 
 """Add the path to the FTS table"""
+"""Cache Results creates the table for caching with persistence on disk as we don t have an interactive CLI, entries:
+ -cache key -> it is a string in form of a raw query :: sorting strategy
+ -results -> used for serializing and deserializing results of the cache in form of a json file, the data object is the same SearchResult
+ -created_at -> timestamp that records when a cache entry was stored and it is used for Time to Live expiration to prevent getting 
+ outdated results
+ """
 _SCHEMA = """
 CREATE TABLE IF NOT EXISTS files (
     id          INTEGER PRIMARY KEY,
@@ -21,6 +27,11 @@ CREATE TABLE IF NOT EXISTS search_history (
     query TEXT UNIQUE NOT NULL,
     search_count INTEGER DEFAULT 1,
     timestamp REAL
+);
+CREATE TABLE IF NOT EXISTS cache_results (
+    cache_key   TEXT PRIMARY KEY,
+    results     TEXT NOT NULL,
+    created_at  REAL NOT NULL
 );
 
 CREATE VIRTUAL TABLE IF NOT EXISTS files_fts USING fts5(

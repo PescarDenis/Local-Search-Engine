@@ -24,15 +24,25 @@ class QueryEngine:
         self._strategy = strategy or RelevanceRanking()
         self._observers: list[SearchObserver] = []
 
+    def strategy_name(self) -> str:
+        return type(self._strategy).__name__
+
     def attach(self, observer: SearchObserver) -> None:
         # subscribes a generic observer -> HistoryTracker to listen to queries
         self._observers.append(observer)
-
+    """
+    Deprecated method used before for the query engine search but now if there is a cache miss --->
+    normal flow of the query engine execute search is called which searches the query
     def search(self, raw_query: str) -> list[SearchResult]:
         # notify all subscribed trackers that a search is occurring
         for observer in self._observers:
             observer.on_search(raw_query)
 
+        return self._execute_search(raw_query)
+    """
+
+    #search logic separated so the caching proxy can call it without re-notifying observers
+    def _execute_search(self, raw_query: str) -> list[SearchResult]:
         fts_query = self._parser.parse(raw_query)
         if fts_query is None:
             return []

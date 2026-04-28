@@ -1,5 +1,5 @@
 [database]
-path = "~/.search_engine/index.db"
+path = "./Database/index.db"
 
 [indexer]
 root = "/home/denispescar"
@@ -19,4 +19,5 @@ ignore = [
 
 [search]
 max_results = 20
-snippet_tokens = 10
+snippet_tokens = 20
+cache_ttl = 300
