@@ -2,12 +2,13 @@ from pathlib import Path
 from ..models import FileEntry
 from .metadata_extractor import MetadataExtractor
 from .text_extractor import TextExtractor
+from .image_extractor import ImageExtractor
 from .scorer import FileScorer
 
 class FileParser:
 
     def __init__(self, extractors=None, metadata=None, scorer=None):
-        self.extractors = extractors or [TextExtractor()]
+        self.extractors = extractors or [TextExtractor(), ImageExtractor()]
         self.metadata = metadata or MetadataExtractor()
         self.scorer = scorer or FileScorer()
 
@@ -16,10 +17,10 @@ class FileParser:
             meta = self.metadata.extract(path)
         except Exception:
             return None
-        content, preview = "", ""
+        extracted = {"content": "", "preview": "", "color": ""}
         for ext in self.extractors:
             if ext.can_handle(meta["mime_type"]):
-                content, preview = ext.extract(path)
+                extracted = ext.extract(path)
                 break
 
         return FileEntry(
@@ -30,7 +31,8 @@ class FileParser:
             created_at=meta["created_at"],
             modified_at=meta["modified_at"],
             mime_type=meta["mime_type"],
-            content=content,
-            preview=preview,
+            content=extracted.get("content", ""),
+            preview=extracted.get("preview", ""),
+            color=extracted.get("color", ""),
             weight=self.scorer.score(path, meta["size_bytes"], meta["modified_at"]),
         )

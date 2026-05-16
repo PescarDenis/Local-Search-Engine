@@ -7,6 +7,9 @@ from .connection import get_connection
  -created_at -> timestamp that records when a cache entry was stored and it is used for Time to Live expiration to prevent getting 
  outdated results
  """
+
+#Add the color field in the main schema and change it everywhere in the code where we actually use it
+#for processing images
 _SCHEMA = """
 CREATE TABLE IF NOT EXISTS files (
     id          INTEGER PRIMARY KEY,
@@ -19,6 +22,7 @@ CREATE TABLE IF NOT EXISTS files (
     modified_at REAL,
     preview     TEXT,
     content     TEXT,
+    color       TEXT,
     weight      REAL DEFAULT 1.0
 );
 
@@ -38,28 +42,29 @@ CREATE VIRTUAL TABLE IF NOT EXISTS files_fts USING fts5(
     path,
     filename,
     content,
+    color,
     content='files',
     content_rowid='id'
 );
 
 CREATE TRIGGER IF NOT EXISTS files_ai
 AFTER INSERT ON files BEGIN
-    INSERT INTO files_fts(rowid, path, filename, content)
-    VALUES (new.id, new.path, new.filename, new.content);
+    INSERT INTO files_fts(rowid, path, filename, content, color)
+    VALUES (new.id, new.path, new.filename, new.content, new.color);
 END;
 
 CREATE TRIGGER IF NOT EXISTS files_ad
 AFTER DELETE ON files BEGIN
-    INSERT INTO files_fts(files_fts, rowid, path, filename, content)
-    VALUES ('delete', old.id, old.path, old.filename, old.content);
+    INSERT INTO files_fts(files_fts, rowid, path, filename, content, color)
+    VALUES ('delete', old.id, old.path, old.filename, old.content, old.color);
 END;
 
 CREATE TRIGGER IF NOT EXISTS files_au
 AFTER UPDATE ON files BEGIN
-    INSERT INTO files_fts(files_fts, rowid, path, filename, content)
-    VALUES ('delete', old.id, old.path, old.filename, old.content);
-    INSERT INTO files_fts(rowid, path, filename, content)
-    VALUES (new.id, new.path, new.filename, new.content);
+    INSERT INTO files_fts(files_fts, rowid, path, filename, content, color)
+    VALUES ('delete', old.id, old.path, old.filename, old.content, old.color);
+    INSERT INTO files_fts(rowid, path, filename, content, color)
+    VALUES (new.id, new.path, new.filename, new.content, new.color);
 END;
 """
 

@@ -7,5 +7,7 @@ class BaseExtractor(ABC):
         pass
 
     @abstractmethod
-    def extract(self, path: Path) -> tuple[str, str]:
+    #return a dict instead of a tuple because it is more scalabale
+    #we can now return content : ... , preview:.... ,color ... etc.
+    def extract(self, path: Path) -> dict[str, str]:
         pass

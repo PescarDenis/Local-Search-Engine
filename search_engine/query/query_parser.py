@@ -1,8 +1,8 @@
 import re
 from collections import defaultdict
 FTS_REG_CHARS = re.compile(r'["\(\)\*\^]')
-#matches targeted searches like path:some_folder or content:text
-PATTERN = re.compile(r'^(path|content):(.+)$', re.IGNORECASE)
+#matches targeted searches like path:some_folder, content:text, or color:red
+PATTERN = re.compile(r'^(path|content|color):(.+)$', re.IGNORECASE)
 
 class QueryParser:
     def parse(self, raw: str) -> str | None:
@@ -28,7 +28,7 @@ class QueryParser:
         parts = []
 
         #build query clauses for standard columns
-        for key in ("path", "content"):
+        for key in ("path", "content", "color"):
             vals = fields.get(key)
             if vals:
                 parts.append(self._build_filter(key, vals))

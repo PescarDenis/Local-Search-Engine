@@ -116,9 +116,10 @@ Terminal Escaping:
      -search hello world
 
 ->> Specific Column Searches
-    Restrict the search to a specific area using 'path:' or 'content:'.
+    Restrict the search to a specific area using 'path:', 'content:', or 'color:'.
      -search content: whatever
      -search path:src
+     -search color:red
 
 ->> Exact Phrase Searches (Needs single quotes in terminal)
     Find an exact, multi-word sequence (including spaces). 

@@ -19,10 +19,10 @@ class TextExtractor(BaseExtractor):
             return True
         return mime_type in self.VALID_TYPES
 
-    def extract(self, path: Path) -> tuple[str, str]:
+    def extract(self, path: Path) -> dict[str, str]:
         encoding = self._guess_encoding(path)
         if not encoding:
-            return "", ""
+            return {"content": "", "preview": "", "color": ""}
 
         try:
             with open(path, "r", encoding=encoding,errors="replace") as f:
@@ -31,10 +31,10 @@ class TextExtractor(BaseExtractor):
             content = "".join(lines).strip()
             preview = "".join(lines[:3]).strip()
 
-            return content, preview
+            return {"content": content, "preview": preview, "color": ""}
 
         except OSError:
-            return "", ""
+            return {"content": "", "preview": "", "color": ""}
 
     def _guess_encoding(self, path: Path) -> str | None:
         try:

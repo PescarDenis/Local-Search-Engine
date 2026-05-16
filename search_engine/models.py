@@ -12,6 +12,7 @@ class FileEntry:
     mime_type: str
     content: str
     preview: str
+    color: str = ""
     weight: float = 1.0
 
 
