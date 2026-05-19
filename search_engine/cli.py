@@ -2,6 +2,9 @@ import argparse
 import sys
 from datetime import datetime
 from pathlib import Path
+
+from .widget.widget_factory import create_default_factory
+from .widget.widget_observer import WidgetObserver
 from .config import load as load_config
 from .indexer import Indexer
 from .query.query_engine import QueryEngine
@@ -48,6 +51,11 @@ def cmd_search(args: argparse.Namespace, config: dict) -> None:
     )
     engine.attach(tracker)
 
+    #set up the widget system factory and observer
+    widget_factory = create_default_factory()
+    widget_observer = WidgetObserver(widget_factory)
+    engine.attach(widget_observer) #subscribe to search result updates
+
     ttl = config["search"].get("cache_ttl", 300) # get the time to live
     cache = SearchCache(config["database"]["path"], ttl_seconds=ttl)
     cached_engine = CachedQueryEngine(engine, cache)
@@ -68,6 +76,20 @@ def cmd_search(args: argparse.Namespace, config: dict) -> None:
         print(f"    Modified : {modified}")
         if result.preview:
             print(f"    Preview  : {result.preview}")
+
+    #display widgets already evaluated by the observer
+    active_widgets = widget_observer.get_active_widgets()
+    ctx = widget_observer.get_last_context()
+
+    if active_widgets and ctx:
+        box_width = 42
+        print(f"\n+{'-' * box_width}+")
+        for idx, widget in enumerate(active_widgets):
+            for line in widget.render(ctx).splitlines():
+                print(f"| {line:<{box_width - 1}}|")
+            if idx < len(active_widgets) - 1:
+                print(f"+{'-' * box_width}+")
+        print(f"+{'-' * box_width}+")
 
 
 def cmd_suggest(args: argparse.Namespace, config: dict) -> None:

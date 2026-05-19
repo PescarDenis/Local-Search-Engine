@@ -9,6 +9,10 @@ class SearchObserver(ABC):
     def on_search(self, raw_query: str) -> None:
         pass
 
+    def on_results(self, raw_query: str, results: list) -> None:
+        #called after results are available, used for widgets
+        pass
+
 class HistoryTracker(SearchObserver):
     def __init__(self, db_path: str):
         self._db_path = db_path

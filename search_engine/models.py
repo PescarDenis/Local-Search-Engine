@@ -1,5 +1,8 @@
+import os
+import re
 import time
 from dataclasses import dataclass, field
+from collections import Counter
 
 @dataclass
 class FileEntry:
@@ -56,3 +59,52 @@ class IndexReport:
             f"  Total    : {total}\n"
             f"  Duration : {duration:.1f}s\n"
         )
+
+"""
+Normally, the widgets needs to analyze the results after are results are returned from the query.
+We are going to build a new class, that will act as a DTO which decides which widget to activate
+and not modify the current logic
+
+->SearchContextWidget does the analysis for which widget to activate all at once and exposes the results
+"""
+IMAGE_EXT = {".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp", ".svg",}
+LOG_EXT = {".log"}
+CODE_EXT= {".py", ".js", ".ts", ".cpp","cpp.o.d","cpp.o" ".c", ".h", ".go", ".rs",".java"}
+
+@dataclass
+class SearchContextWidget:
+    raw_query: str #raw query
+    results: list[SearchResult] #results returned from the query
+
+    #computed fields
+    extension_counts: Counter = field(default_factory=Counter)  #count how many extensions we found
+    dominant_extension: str | None = None #determine which one is the dominant  ext
+    has_color_query: bool = False #color widget if we input a query with "color"
+    image_ratio: float = 0.0
+    log_ratio: float = 0.0
+    code_ratio: float = 0.0
+
+    def __post_init__(self) -> None:
+        self._compute_extension_stats()
+
+    #private function to determine the stats
+    def _compute_extension_stats(self) -> None:
+        if not self.results:
+            return
+
+        for r in self.results:
+            ext = os.path.splitext(r.path)[1].lower()
+            self.extension_counts[ext] += 1
+
+        total = len(self.results)
+        self.dominant_extension = self.extension_counts.most_common(1)[0][0] if self.extension_counts else None
+
+        image_count = sum(self.extension_counts[e] for e in IMAGE_EXT)
+        log_count = sum(self.extension_counts[e] for e in LOG_EXT)
+        code_count = sum(self.extension_counts[e] for e in CODE_EXT)
+
+        self.image_ratio = image_count / total
+        self.log_ratio = log_count / total
+        self.code_ratio = code_count / total
+        self.has_color_query = bool(re.search(r"color:", self.raw_query))
+

@@ -116,13 +116,22 @@ class CachedQueryEngine:
 
         cache_key = self._build_key(raw_query)
         cached = self._cache.get(cache_key)
+        
         if cached is not None:
+            #notify observers with results so widgets can evaluate
+            for observer in self._engine._observers:
+                observer.on_results(raw_query, cached)
             return cached
 
         #cache miss -> delegate to the real engine but skip observer notifications since we already notified above
         results = self._engine._execute_search(raw_query)
 
         self._cache.put(cache_key, results)
+
+        #notify observers with results so widgets can evaluate even when there is a cache miss
+        for observer in self._engine._observers:
+            observer.on_results(raw_query, results)
+
         return results
 
     #method that build the raw_query_str :: strategy
