@@ -7,6 +7,9 @@ from .widget.widget_factory import create_default_factory
 from .widget.widget_observer import WidgetObserver
 from .config import load as load_config
 from .indexer import Indexer
+from .parser.file_parser import FileParser
+from .parser.text_extractor import TextExtractor
+from .parser.image_extractor import ImageExtractor
 from .query.query_engine import QueryEngine
 from .query.ranking import RelevanceRanking, AlphabeticalRanking, DateRanking, HistoryRanking
 from .query.history import HistoryTracker
@@ -20,11 +23,20 @@ def cmd_index(args: argparse.Namespace, config: dict) -> None:
         print(f"Error: root directory '{root}' does not exist.", file=sys.stderr)
         sys.exit(1)
 
-    print(f"Indexing '{root}' ...")
+    #select extractors based on the --mode flag
+    mode = getattr(args, "mode", "all")
+    match mode:
+        case "text":  extractors = [TextExtractor()]
+        case "image": extractors = [ImageExtractor()]
+        case _:       extractors = [TextExtractor(), ImageExtractor()]
 
+    print(f"Indexing '{root}' (mode: {mode}) ...")
+
+    parser = FileParser(extractors=extractors)
     indexer = Indexer(
         db_path=config["database"]["path"],
         ignore_patterns=config["indexer"]["ignore"],
+        parser=parser,
     )
     report = indexer.run(root)
     print(report.print_report())
@@ -124,6 +136,12 @@ def build_parser() -> argparse.ArgumentParser:
         "--root",
         metavar="PATH",
         help="Root directory to crawl",
+    )
+    index_cmd.add_argument(
+        "--mode",
+        choices=["all", "text", "image"],
+        default="all",
+        help="Index only specific file types (all, text, image)",
     )
 
     search_help = """
