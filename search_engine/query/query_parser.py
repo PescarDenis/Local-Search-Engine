@@ -1,6 +1,6 @@
 import re
 from collections import defaultdict
-FTS_REG_CHARS = re.compile(r'["\(\)\*\^]')
+#sanitization of FTS special characters is handled by the SanitizationDecorator
 #matches targeted searches like path:some_folder, content:text, or color:red
 PATTERN = re.compile(r'^(path|content|color):(.+)$', re.IGNORECASE)
 
@@ -62,11 +62,13 @@ class QueryParser:
     def _clean_term(self, value: str) -> str:
         #check if the input is in between quotes
         is_quoted = value.startswith('"') and value.endswith('"') and len(value) >= 2
-        #strip them if needed
-        cleaned = FTS_REG_CHARS.sub("", value.strip('"')).strip()
-        return f'"{cleaned}"' if is_quoted and cleaned else cleaned
+        #extract the inner content safely
+        if is_quoted:
+            cleaned = value[1:-1].strip()
+            return f'"{cleaned}"' if cleaned else ""
+        return value.strip()
 
     def _build_filter(self, column: str, values: list[str]) -> str:
         #formats a column search wrapping in parentheses if there are multiple values
         clauses = [f'{column} : {v}' if v.startswith('"') else f'{column} : "{v}"' for v in values]
-        return clauses[0] if len(values) == 1 else f"({' AND '.join(clauses)})"
+        return clauses[0] if len(values) == 1 else f"({' OR '.join(clauses)})"

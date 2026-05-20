@@ -1,6 +1,7 @@
 from ..database.connection import get_connection
 from ..models import SearchResult
 from .query_parser import QueryParser
+from .query_preprocessor import QueryBuilder, BaseQueryBuilder
 from .result_formatter import ResultFormatter
 from .ranking import RankingStrategy, RelevanceRanking
 from .history import SearchObserver
@@ -15,6 +16,7 @@ class QueryEngine:
         parser: QueryParser | None = None,
         formatter: ResultFormatter | None = None,
         strategy: RankingStrategy | None = None,
+        builder: QueryBuilder | None = None,
     ) -> None:
         self._db_path = db_path
         self._max_results = max_results
@@ -22,6 +24,7 @@ class QueryEngine:
         self._parser = parser or QueryParser()
         self._formatter = formatter or ResultFormatter()
         self._strategy = strategy or RelevanceRanking()
+        self._builder = builder or BaseQueryBuilder()
         self._observers: list[SearchObserver] = []
 
     def strategy_name(self) -> str:
@@ -43,7 +46,8 @@ class QueryEngine:
 
     #search logic separated so the caching proxy can call it without re-notifying observers
     def _execute_search(self, raw_query: str) -> list[SearchResult]:
-        fts_query = self._parser.parse(raw_query)
+        preprocessed = self._builder.build(raw_query)
+        fts_query = self._parser.parse(preprocessed)
         if fts_query is None:
             return []
 

@@ -14,7 +14,7 @@ from .query.query_engine import QueryEngine
 from .query.ranking import RelevanceRanking, AlphabeticalRanking, DateRanking, HistoryRanking
 from .query.history import HistoryTracker
 from .query.cache import SearchCache, CachedQueryEngine
-
+from .query.query_preprocessor import BaseQueryBuilder, SanitizationDecorator, SynonymDecorator, WildcardDecorator
 
 def cmd_index(args: argparse.Namespace, config: dict) -> None:
     root = Path(args.root or config["indexer"]["root"])
@@ -55,11 +55,15 @@ def cmd_search(args: argparse.Namespace, config: dict) -> None:
         case "history": strategy = HistoryRanking(tracker)
         case _: strategy = RelevanceRanking()
 
+    #build the decorator chain: Sanitization -> Synonyms -> Wildcards
+    builder = WildcardDecorator(SynonymDecorator(SanitizationDecorator(BaseQueryBuilder())))
+
     engine = QueryEngine(
         db_path=config["database"]["path"],
         max_results=config["search"]["max_results"],
         snippet_tokens=config["search"]["snippet_tokens"],
         strategy=strategy,
+        builder=builder
     )
     engine.attach(tracker)
 
@@ -108,11 +112,11 @@ def cmd_suggest(args: argparse.Namespace, config: dict) -> None:
     tracker = HistoryTracker(config["database"]["path"])
     prefix = " ".join(args.query)
     suggestions = tracker.get_suggestions(prefix)
-    
+
     if not suggestions:
         print(f"No suggestions found for '{prefix}'.")
         return
-        
+
     print(f"Suggestions for '{prefix}':")
     for s in suggestions:
         print(f"  - {s}")
