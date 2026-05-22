@@ -71,4 +71,5 @@ END;
 
 def initialise(db_path: str) -> None:
     with get_connection(db_path) as conn:
+        conn.execute("PRAGMA journal_mode=WAL")
         conn.executescript(_SCHEMA)

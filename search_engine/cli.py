@@ -15,6 +15,7 @@ from .query.ranking import RelevanceRanking, AlphabeticalRanking, DateRanking, H
 from .query.history import HistoryTracker
 from .query.cache import SearchCache, CachedQueryEngine
 from .query.query_preprocessor import BaseQueryBuilder, SanitizationDecorator, SynonymDecorator, WildcardDecorator
+import os
 
 def cmd_index(args: argparse.Namespace, config: dict) -> None:
     root = Path(args.root or config["indexer"]["root"])
@@ -30,15 +31,22 @@ def cmd_index(args: argparse.Namespace, config: dict) -> None:
         case "image": extractors = [ImageExtractor()]
         case _:       extractors = [TextExtractor(), ImageExtractor()]
 
-    print(f"Indexing '{root}' (mode: {mode}) ...")
-
     parser = FileParser(extractors=extractors)
     indexer = Indexer(
         db_path=config["database"]["path"],
         ignore_patterns=config["indexer"]["ignore"],
         parser=parser,
     )
-    report = indexer.run(root)
+
+    processes = getattr(args, "processes")
+    if processes is None:
+        processes = os.cpu_count() or 1 #safety to put 1 in here and also get rid of warnings
+
+    #cap it to os.cpu_count(), in case the user wants to introduce more
+    processes = min(processes, os.cpu_count())
+
+    print(f"Indexing '{root}' (mode: {mode}, processes: {processes}) ")
+    report = indexer.run(root, num_processes=processes)
     print(report.print_report())
 
     cache = SearchCache(config["database"]["path"])
@@ -146,6 +154,11 @@ def build_parser() -> argparse.ArgumentParser:
         choices=["all", "text", "image"],
         default="all",
         help="Index only specific file types (all, text, image)",
+    )
+    index_cmd.add_argument(
+        "--processes",
+        type=int,
+        help="Number of producer processes to use for indexing",
     )
 
     search_help = """

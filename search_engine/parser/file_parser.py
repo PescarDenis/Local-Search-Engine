@@ -17,11 +17,15 @@ class FileParser:
             meta = self.metadata.extract(path)
         except Exception:
             return None
-        extracted = {"content": "", "preview": "", "color": ""}
+        extracted = None
         for ext in self.extractors:
             if ext.can_handle(meta["mime_type"]):
                 extracted = ext.extract(path)
                 break
+                
+        # If no extractor can handle this file type, skip it entirely
+        if extracted is None:
+            return None
 
         return FileEntry(
             path=str(path),
