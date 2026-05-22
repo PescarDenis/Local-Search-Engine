@@ -6,6 +6,7 @@ from .result_formatter import ResultFormatter
 from .ranking import RankingStrategy, RelevanceRanking
 from .history import SearchObserver
 
+
 class QueryEngine:
 
     def __init__(
@@ -33,6 +34,7 @@ class QueryEngine:
     def attach(self, observer: SearchObserver) -> None:
         # subscribes a generic observer -> HistoryTracker to listen to queries
         self._observers.append(observer)
+
     """
     Deprecated method used before for the query engine search but now if there is a cache miss --->
     normal flow of the query engine execute search is called which searches the query
@@ -44,7 +46,7 @@ class QueryEngine:
         return self._execute_search(raw_query)
     """
 
-    #search logic separated so the caching proxy can call it without re-notifying observers
+    # search logic separated so the caching proxy can call it without re-notifying observers
     def _execute_search(self, raw_query: str) -> list[SearchResult]:
         preprocessed = self._builder.build(raw_query)
         fts_query = self._parser.parse(preprocessed)
@@ -53,7 +55,7 @@ class QueryEngine:
 
         rows = self._run_query(fts_query)
         results = self._formatter.format(rows)
-        
+
         # allow the active sorting strategy to manually tweak the results
         return self._strategy.apply_ranking(results)
 
@@ -66,7 +68,7 @@ class QueryEngine:
                 f.modified_at,
                 f.preview,
                 (fts.rank * f.weight) AS combined_score,
-                snippet(files_fts, 2, '[', ']', '...', :tokens) AS snippet           
+                snippet(files_fts, 2, '[', ']', '...', :tokens) AS snippet
             FROM files_fts fts
             JOIN files f ON f.id = fts.rowid
             WHERE files_fts MATCH :query
@@ -78,9 +80,9 @@ class QueryEngine:
                 rows = conn.execute(
                     sql,
                     {
-                        "query":  fts_query,
+                        "query": fts_query,
                         "tokens": self._snippet_tokens,
-                        "limit":  self._max_results,
+                        "limit": self._max_results,
                     },
                 ).fetchall()
             return rows

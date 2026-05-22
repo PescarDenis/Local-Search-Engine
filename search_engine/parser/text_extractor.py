@@ -4,8 +4,9 @@ import chardet
 from pathlib import Path
 from .base_extractor import BaseExtractor
 
+
 class TextExtractor(BaseExtractor):
-    #MIME types that do not start with text but we still want to read
+    # MIME types that do not start with text but we still want to read
     VALID_TYPES = {
         "application/json",
         "application/xml",
@@ -25,7 +26,7 @@ class TextExtractor(BaseExtractor):
             return {"content": "", "preview": "", "color": ""}
 
         try:
-            with open(path, "r", encoding=encoding,errors="replace") as f:
+            with open(path, "r", encoding=encoding, errors="replace") as f:
                 lines = f.readlines()
 
             content = "".join(lines).strip()
@@ -38,11 +39,13 @@ class TextExtractor(BaseExtractor):
 
     def _guess_encoding(self, path: Path) -> str | None:
         try:
-            raw = path.read_bytes()[:8192]  #Read 8KB to figure out the encoding of the file
+            raw = path.read_bytes()[
+                :8192
+            ]  # Read 8KB to figure out the encoding of the file
         except OSError:
             return None
 
-        if b"\x00" in raw: # if this is a binary file
+        if b"\x00" in raw:  # if this is a binary file
             return None
 
         guessed = chardet.detect(raw)

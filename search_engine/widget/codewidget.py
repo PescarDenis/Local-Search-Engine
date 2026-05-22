@@ -4,9 +4,22 @@ from collections import Counter
 from ..models import SearchContextWidget
 from .widget_base import Widget
 
-CODE_EXT= {".py", ".js", ".ts", ".cpp", "cpp.o.d", "cpp.o", ".c", ".h", ".go", ".rs",".java"}
+CODE_EXT = {
+    ".py",
+    ".js",
+    ".ts",
+    ".cpp",
+    "cpp.o.d",
+    "cpp.o",
+    ".c",
+    ".h",
+    ".go",
+    ".rs",
+    ".java",
+}
 
 """Activates when search results are predominantly source code files."""
+
 
 class CodeStatsWidget(Widget):
 
@@ -18,7 +31,7 @@ class CodeStatsWidget(Widget):
         return ctx.code_ratio >= 0.4
 
     def render(self, ctx: SearchContextWidget) -> str:
-        #count how many files did we find of each extension -> aka languages found
+        # count how many files did we find of each extension -> aka languages found
         lang_counts: Counter = Counter()
         for r in ctx.results:
             ext = os.path.splitext(r.path)[1].lower()

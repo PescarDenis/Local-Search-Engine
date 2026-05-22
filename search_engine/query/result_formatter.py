@@ -1,11 +1,12 @@
 from ..models import SearchResult
 
+
 class ResultFormatter:
     def format(self, rows: list) -> list[SearchResult]:
         results = []
         for row in rows:
             try:
-                preview = self._pick_preview(  row["snippet"], row["preview"])
+                preview = self._pick_preview(row["snippet"], row["preview"])
                 results.append(
                     SearchResult(
                         path=row["path"],
@@ -18,8 +19,9 @@ class ResultFormatter:
             except (IndexError, KeyError, TypeError):
                 continue
         return results
-    #choose between the preview that is generated from each txt file
-    #or the snippet FTS is given
+
+    # choose between the preview that is generated from each txt file
+    # or the snippet FTS is given
     def _pick_preview(self, snippet: str | None, preview: str | None) -> str:
         if snippet:
             cleaned = self._clean_snippet(snippet)
@@ -28,7 +30,8 @@ class ResultFormatter:
         if preview:
             return preview.strip()
         return ""
-    #function to clean the preview -> more clear output in the CLI
+
+    # function to clean the preview -> more clear output in the CLI
     def _clean_snippet(self, raw: str) -> str:
         if not raw:
             return ""
@@ -37,4 +40,3 @@ class ResultFormatter:
         if not matched:
             return ""
         return " | ".join(matched)
-

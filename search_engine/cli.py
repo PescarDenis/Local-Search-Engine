@@ -11,11 +11,22 @@ from .parser.file_parser import FileParser
 from .parser.text_extractor import TextExtractor
 from .parser.image_extractor import ImageExtractor
 from .query.query_engine import QueryEngine
-from .query.ranking import RelevanceRanking, AlphabeticalRanking, DateRanking, HistoryRanking
+from .query.ranking import (
+    RelevanceRanking,
+    AlphabeticalRanking,
+    DateRanking,
+    HistoryRanking,
+)
 from .query.history import HistoryTracker
 from .query.cache import SearchCache, CachedQueryEngine
-from .query.query_preprocessor import BaseQueryBuilder, SanitizationDecorator, SynonymDecorator, WildcardDecorator
+from .query.query_preprocessor import (
+    BaseQueryBuilder,
+    SanitizationDecorator,
+    SynonymDecorator,
+    WildcardDecorator,
+)
 import os
+
 
 def cmd_index(args: argparse.Namespace, config: dict) -> None:
     root = Path(args.root or config["indexer"]["root"])
@@ -24,12 +35,15 @@ def cmd_index(args: argparse.Namespace, config: dict) -> None:
         print(f"Error: root directory '{root}' does not exist.", file=sys.stderr)
         sys.exit(1)
 
-    #select extractors based on the --mode flag
+    # select extractors based on the --mode flag
     mode = getattr(args, "mode", "all")
     match mode:
-        case "text":  extractors = [TextExtractor()]
-        case "image": extractors = [ImageExtractor()]
-        case _:       extractors = [TextExtractor(), ImageExtractor()]
+        case "text":
+            extractors = [TextExtractor()]
+        case "image":
+            extractors = [ImageExtractor()]
+        case _:
+            extractors = [TextExtractor(), ImageExtractor()]
 
     parser = FileParser(extractors=extractors)
     indexer = Indexer(
@@ -40,9 +54,11 @@ def cmd_index(args: argparse.Namespace, config: dict) -> None:
 
     processes = getattr(args, "processes")
     if processes is None:
-        processes = os.cpu_count() or 1 #safety to put 1 in here and also get rid of warnings
+        processes = (
+            os.cpu_count() or 1
+        )  # safety to put 1 in here and also get rid of warnings
 
-    #cap it to os.cpu_count(), in case the user wants to introduce more
+    # cap it to os.cpu_count(), in case the user wants to introduce more
     processes = min(processes, os.cpu_count())
 
     print(f"Indexing '{root}' (mode: {mode}, processes: {processes}) ")
@@ -50,7 +66,7 @@ def cmd_index(args: argparse.Namespace, config: dict) -> None:
     print(report.print_report())
 
     cache = SearchCache(config["database"]["path"])
-    cache.invalidate() #invalidate when indexing is run
+    cache.invalidate()  # invalidate when indexing is run
     print("Search cache cleared.")
 
 
@@ -58,29 +74,35 @@ def cmd_search(args: argparse.Namespace, config: dict) -> None:
     query = " ".join(args.query)
     tracker = HistoryTracker(config["database"]["path"])
     match getattr(args, "sort", "relevance"):
-        case "alphabetical": strategy = AlphabeticalRanking()
-        case "date": strategy = DateRanking()
-        case "history": strategy = HistoryRanking(tracker)
-        case _: strategy = RelevanceRanking()
+        case "alphabetical":
+            strategy = AlphabeticalRanking()
+        case "date":
+            strategy = DateRanking()
+        case "history":
+            strategy = HistoryRanking(tracker)
+        case _:
+            strategy = RelevanceRanking()
 
-    #build the decorator chain: Sanitization -> Synonyms -> Wildcards
-    builder = WildcardDecorator(SynonymDecorator(SanitizationDecorator(BaseQueryBuilder())))
+    # build the decorator chain: Sanitization -> Synonyms -> Wildcards
+    builder = WildcardDecorator(
+        SynonymDecorator(SanitizationDecorator(BaseQueryBuilder()))
+    )
 
     engine = QueryEngine(
         db_path=config["database"]["path"],
         max_results=config["search"]["max_results"],
         snippet_tokens=config["search"]["snippet_tokens"],
         strategy=strategy,
-        builder=builder
+        builder=builder,
     )
     engine.attach(tracker)
 
-    #set up the widget system factory and observer
+    # set up the widget system factory and observer
     widget_factory = create_default_factory()
     widget_observer = WidgetObserver(widget_factory)
-    engine.attach(widget_observer) #subscribe to search result updates
+    engine.attach(widget_observer)  # subscribe to search result updates
 
-    ttl = config["search"].get("cache_ttl", 300) # get the time to live
+    ttl = config["search"].get("cache_ttl", 300)  # get the time to live
     cache = SearchCache(config["database"]["path"], ttl_seconds=ttl)
     cached_engine = CachedQueryEngine(engine, cache)
     results = cached_engine.search(query)
@@ -89,7 +111,9 @@ def cmd_search(args: argparse.Namespace, config: dict) -> None:
         print("No results found.")
         return
 
-    cache_label = " (cached)" if cache.get_last_hit() else "" #print result to show if the data is cached or not
+    cache_label = (
+        " (cached)" if cache.get_last_hit() else ""
+    )  # print result to show if the data is cached or not
     print(f"\n{len(results)} result(s) for '{query}'{cache_label}\n{'─' * 50}")
 
     for i, result in enumerate(results, start=1):
@@ -101,7 +125,7 @@ def cmd_search(args: argparse.Namespace, config: dict) -> None:
         if result.preview:
             print(f"    Preview  : {result.preview}")
 
-    #display widgets already evaluated by the observer
+    # display widgets already evaluated by the observer
     active_widgets = widget_observer.get_active_widgets()
     ctx = widget_observer.get_last_context()
 
@@ -166,7 +190,7 @@ Search the index.
 Examples of specific queries that you may input
 
 Terminal Escaping:
-  If your search uses double quotes (""), wrap the ENTIRE query in single quotes ('') 
+  If your search uses double quotes (""), wrap the ENTIRE query in single quotes ('')
 
 ->> Basic Searches (No quotes needed)
     Finds files containing all words anywhere (path, name, or content).
@@ -179,7 +203,7 @@ Terminal Escaping:
      -search color:red
 
 ->> Exact Phrase Searches (Needs single quotes in terminal)
-    Find an exact, multi-word sequence (including spaces). 
+    Find an exact, multi-word sequence (including spaces).
      -search '"hello world"'
      -search 'content:"void main()"'
 
@@ -207,7 +231,9 @@ Terminal Escaping:
         help="Ranking strategy to use (relevance, alphabetical, date, history)",
     )
 
-    suggest_cmd = subparsers.add_parser("suggest", help="Suggest queries based on history")
+    suggest_cmd = subparsers.add_parser(
+        "suggest", help="Suggest queries based on history"
+    )
     suggest_cmd.add_argument("query", nargs="+", help="Prefix to search for in history")
 
     return parser
@@ -221,6 +247,9 @@ def main() -> None:
     config = load_config(config_path) if config_path else load_config()
 
     match args.command:
-        case "index":  cmd_index(args, config)
-        case "search": cmd_search(args, config)
-        case "suggest": cmd_suggest(args, config)
+        case "index":
+            cmd_index(args, config)
+        case "search":
+            cmd_search(args, config)
+        case "suggest":
+            cmd_suggest(args, config)

@@ -12,12 +12,10 @@ ignore = [
     ".vscode",
     "*.pdf",
     "*.exe",
-    "*.png",
-    "*.jpg",
     "*.zip"
 ]
 
 [search]
-max_results = 20
+max_results =50
 snippet_tokens = 20
 cache_ttl = 300

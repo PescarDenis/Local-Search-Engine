@@ -1,6 +1,7 @@
 import mimetypes
 from pathlib import Path
 
+
 class MetadataExtractor:
     def extract(self, path: Path) -> dict:
         try:

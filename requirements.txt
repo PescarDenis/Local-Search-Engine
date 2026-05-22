@@ -2,3 +2,4 @@ chardet
 opencv-python
 scipy
 webcolors
+pre-commit

@@ -28,8 +28,7 @@ class FileWalker:
             visited_inodes.add(inode)
 
             dirnames[:] = [
-                d for d in dirnames
-                if not self._filter.should_ignore(current / d)
+                d for d in dirnames if not self._filter.should_ignore(current / d)
             ]
 
             for filename in filenames:

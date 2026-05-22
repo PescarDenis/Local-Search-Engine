@@ -1,5 +1,6 @@
 from search_engine.query.query_parser import QueryParser
 
+
 class TestQueryParser:
 
     def setup_method(self):
@@ -64,7 +65,7 @@ class TestQueryParser:
         assert ")" not in result
 
     def test_qualifier_with_empty_value_ignored(self):
-        result = self.parser.parse('path: hello')
+        result = self.parser.parse("path: hello")
         assert result is not None
 
     def test_case_insensitive_qualifier_keys(self):

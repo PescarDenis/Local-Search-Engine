@@ -3,6 +3,7 @@ from .widget_base import Widget
 
 """Activates when the query contains a color: qualifier."""
 
+
 class ColorPaletteWidget(Widget):
 
     @property
@@ -13,7 +14,7 @@ class ColorPaletteWidget(Widget):
         return ctx.has_color_query
 
     def render(self, ctx: SearchContextWidget) -> str:
-        #extract unique color names from the preview strings
+        # extract unique color names from the preview strings
         colors: set[str] = set()
         for r in ctx.results:
             if r.preview and "Dominant color is:" in r.preview:

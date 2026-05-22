@@ -15,22 +15,22 @@ class WidgetObserver(SearchObserver):
         self.active_widgets: list[Widget] = []
         self.last_ctx: SearchContextWidget | None = None
 
-    #the on search method is triggered whenever a search query is performed
-    #specifically for widgets, we reset to not get any stall data from the last search
+    # the on search method is triggered whenever a search query is performed
+    # specifically for widgets, we reset to not get any stall data from the last search
     def on_search(self, raw_query: str) -> None:
         self.active_widgets = []
         self.last_ctx = None
 
-    #called after results are available , builds context and evaluates widgets.
+    # called after results are available , builds context and evaluates widgets.
     def on_results(self, raw_query: str, results: list[SearchResult]) -> None:
         ctx = SearchContextWidget(raw_query=raw_query, results=results)
         self.active_widgets = self.factory.evaluate(ctx)
         self.last_ctx = ctx
 
-    #the list of active widgets
+    # the list of active widgets
     def get_active_widgets(self) -> list[Widget]:
         return list(self.active_widgets)
 
-    #get method for returning the current context
+    # get method for returning the current context
     def get_last_context(self) -> SearchContextWidget | None:
         return self.last_ctx

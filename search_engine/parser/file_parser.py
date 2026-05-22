@@ -5,6 +5,7 @@ from .text_extractor import TextExtractor
 from .image_extractor import ImageExtractor
 from .scorer import FileScorer
 
+
 class FileParser:
 
     def __init__(self, extractors=None, metadata=None, scorer=None):
@@ -22,7 +23,7 @@ class FileParser:
             if ext.can_handle(meta["mime_type"]):
                 extracted = ext.extract(path)
                 break
-                
+
         # If no extractor can handle this file type, skip it entirely
         if extracted is None:
             return None

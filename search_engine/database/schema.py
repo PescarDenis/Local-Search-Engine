@@ -4,12 +4,12 @@ from .connection import get_connection
 """Cache Results creates the table for caching with persistence on disk as we don t have an interactive CLI, entries:
  -cache key -> it is a string in form of a raw query :: sorting strategy
  -results -> used for serializing and deserializing results of the cache in form of a json file, the data object is the same SearchResult
- -created_at -> timestamp that records when a cache entry was stored and it is used for Time to Live expiration to prevent getting 
+ -created_at -> timestamp that records when a cache entry was stored and it is used for Time to Live expiration to prevent getting
  outdated results
  """
 
-#Add the color field in the main schema and change it everywhere in the code where we actually use it
-#for processing images
+# Add the color field in the main schema and change it everywhere in the code where we actually use it
+# for processing images
 _SCHEMA = """
 CREATE TABLE IF NOT EXISTS files (
     id          INTEGER PRIMARY KEY,
